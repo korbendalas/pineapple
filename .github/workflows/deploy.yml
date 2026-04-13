@@ -17,18 +17,15 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-
-      - name: Cache Maven packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          cache: maven
 
       - name: Run tests
-        run: mvn test
+        env:
+          SPRING_PROFILES_ACTIVE: test
+        run: ./mvnw -B test
 
       - name: Build JAR
-        run: mvn package -DskipTests
+        run: ./mvnw -B package -DskipTests
 
       - name: Deploy JAR to EC2
         uses: appleboy/scp-action@v0.1.7
@@ -47,7 +44,16 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            mv /home/ubuntu/app/target/*.jar /home/ubuntu/app/myapp.jar 2>/dev/null || true
+            set -e
+            NEW_JAR=$(ls -t /home/ubuntu/app/*.jar 2>/dev/null | grep -v '/myapp.jar$' | head -n 1 || true)
+
+            if [ -n "$NEW_JAR" ]; then
+              mv "$NEW_JAR" /home/ubuntu/app/myapp.jar
+            elif [ ! -f /home/ubuntu/app/myapp.jar ]; then
+              echo "No JAR found in /home/ubuntu/app"
+              exit 1
+            fi
+
             sudo systemctl restart myapp
             sleep 5
-            sudo systemctl status myapp
+            sudo systemctl --no-pager status myapp
