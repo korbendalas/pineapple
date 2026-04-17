@@ -1,10 +1,20 @@
 spring:
+  application:
+    name: pineaple
   datasource:
     url: jdbc:postgresql://localhost:5432/pineapple
     username: user
     password: password
-
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
+
+server:
+  port: 8080
+
+app:
+  jwt:
+    secret: ${APP_JWT_SECRET:super-secret-key-that-is-at-least-32-bytes-long!}
+    access-token-expiry: 900000
+    refresh-token-expiry: 604800000
