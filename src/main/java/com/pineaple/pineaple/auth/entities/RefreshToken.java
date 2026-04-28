@@ -1,9 +1,6 @@
 package com.pineaple.pineaple.auth.entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -17,11 +14,12 @@ import java.util.UUID;
 public class RefreshToken {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, updatable = false)
-    private UUID id;
+    private Long id;
 
     @Column(name = "user_id", nullable = false, updatable = false)
-    private UUID userId;
+    private Long userId;
 
     @Column(name = "token", nullable = false, unique = true, length = 512)
     private String token;
@@ -36,12 +34,11 @@ public class RefreshToken {
     private LocalDateTime createdAt;
 
 
-    public static RefreshToken create(UUID userId, String token, LocalDateTime expiresAt) {
+    public static RefreshToken create(Long userId, String token, LocalDateTime expiresAt) {
         if (userId == null) throw new IllegalArgumentException("User id must not be null");
         if(token == null || token.isBlank()) throw new IllegalArgumentException("Token must not be blank");
         if(expiresAt == null) throw new IllegalArgumentException("ExpiresAt must not be null");
         RefreshToken refreshToken = new RefreshToken();
-        refreshToken.id = UUID.randomUUID();
         refreshToken.userId = userId;
         refreshToken.token = token;
         refreshToken.expiresAt = expiresAt;
@@ -63,4 +60,3 @@ public class RefreshToken {
     }
 
 }
-

@@ -1,0 +1,70 @@
+@baseUrl = http://localhost:8080
+
+### Step 1: Login (run this first — it saves the token automatically)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com",
+  "password": "password123"
+}
+
+> {%
+    client.global.set("accessToken", response.body.accessToken);
+%}
+
+### Step 2: Create a product
+POST {{baseUrl}}/api/products
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "Pineapple T-Shirt",
+  "description": "A fresh tropical t-shirt made from 100% organic cotton",
+  "price": 29.99,
+  "currency": "USD"
+}
+
+> {%
+    client.global.set("productId", response.body.productId);
+%}
+
+### Create another product
+POST {{baseUrl}}/api/products
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "Tropical Hat",
+  "description": "Lightweight summer hat with pineapple embroidery",
+  "price": 14.50,
+  "currency": "EUR"
+}
+
+
+### Get By Id
+GET {{baseUrl}}/api/products/{{productId}}
+Authorization: Bearer {{accessToken}}
+
+
+### Patch By Id
+PATCH {{baseUrl}}/api/products/{{productId}}
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "Pineapple T-Shirt v2",
+  "description": "Updated tropical t-shirt with a softer premium cotton blend",
+  "price": 34.99,
+  "currency": "USD"
+}
+
+
+### Delete By Id
+DELETE {{baseUrl}}/api/products/{{productId}}
+Authorization: Bearer {{accessToken}}
+
+### Get All Products (Paginated)
+# ?page=0&size=5&sort=name,asc
+GET {{baseUrl}}/api/products?page=0&size=5&sort=name,asc
+Authorization: Bearer {{accessToken}}

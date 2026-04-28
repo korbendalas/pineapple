@@ -34,6 +34,7 @@ public class AuthService {
     @Transactional
     public AuthResult login(String email, String password) {
         String normalizedEmail = email.toLowerCase().strip();
+        log.info("Logging in user with email={}", normalizedEmail);
         User user = userRepository.findByEmail(normalizedEmail).orElseThrow(InvalidCredentialsException::new);
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new InvalidCredentialsException();
@@ -48,20 +49,19 @@ public class AuthService {
         if (userRepository.existsByEmail(normalized)) {
             throw new UserAlreadyExistsException(normalized);
         }
-        User user = User.create(UUID.randomUUID(), normalized, passwordEncoder.encode(password), LocalDateTime.now());
-log.info("User created", user);
+        User user = User.create(normalized, passwordEncoder.encode(password));
+        log.info("Creating user. userId={}, email={}", user.getUserId(), user.getEmail());
         userRepository.save(user);
-        log.info("User registered. userId={}", user.getId());
+        log.info("User registered. userId={}", user.getUserId());
         return issueTokenPair(user);
 
     }
 
     private AuthResult issueTokenPair(User user) {
-        String accessToken = jwtService.generateAccessToken(user.getId(), user.getEmail());
+        String accessToken = jwtService.generateAccessToken(user.getUserId(), user.getEmail());
         String rawRefreshToken = jwtService.generateRefreshToken();
         LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(jwtProperties.refreshTokenExpiry() / 1000);
         refreshTokenRepository.save(RefreshToken.create(user.getId(), rawRefreshToken, expiresAt));
         return new AuthResult(accessToken, rawRefreshToken, jwtProperties.accessTokenExpiry());
     }
 }
-

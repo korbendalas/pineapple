@@ -1,13 +1,18 @@
 package com.pineaple.pineaple.shared.exception;
 
 import com.pineaple.pineaple.auth.exceptions.InvalidCredentialsException;
+import com.pineaple.pineaple.products.dto.ProductNotFoundException;
 import com.pineaple.pineaple.users.exceptions.UserAlreadyExistsException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidCredentialsException.class)
@@ -26,6 +31,19 @@ public class GlobalExceptionHandler {
         return problemDetail;
     }
 
+
+    /**
+     * Maps a missing product to 404 Not Found.
+     */
+    @ExceptionHandler(ProductNotFoundException.class)
+    public ProblemDetail handleProductNotFound(ProductNotFoundException ex) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+//        problem.setType(URI.create("https://shoppingtime.com/errors/product-not-found"));
+        problem.setTitle("Product Not Found");
+        problem.setDetail(ex.getMessage());
+        return problem;
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleValidation(MethodArgumentNotValidException ex) {
         String detail = ex.getBindingResult().getFieldErrors().stream()
@@ -39,8 +57,26 @@ public class GlobalExceptionHandler {
         return problemDetail;
     }
 
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        log.warn("Data integrity violation", ex);
+        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.CONFLICT);
+        problemDetail.setTitle("Conflict");
+        problemDetail.setDetail("Request conflicts with existing data.");
+        return problemDetail;
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
+    public ProblemDetail handleNotAcceptable(HttpMediaTypeNotAcceptableException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.NOT_ACCEPTABLE);
+        problemDetail.setTitle("Not Acceptable");
+        problemDetail.setDetail("Set request Accept header to 'application/json' or '*/*'.");
+        return problemDetail;
+    }
+
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleException(Exception ex) {
+        log.error("Unhandled exception", ex);
         ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
         problemDetail.setTitle("Internal Server Error");
         problemDetail.setDetail("An unexpected error occurred.");

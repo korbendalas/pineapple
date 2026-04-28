@@ -7,6 +7,8 @@ import com.pineaple.pineaple.auth.dto.RegisterRequest;
 import com.pineaple.pineaple.auth.services.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,7 +31,6 @@ public class AuthController {
 
     public ResponseEntity<AuthResponse> register (@Valid @RequestBody RegisterRequest request){
         AuthResult result = authService.register(request.email(), request.password());
-        return ResponseEntity.ok(AuthResponse.of(result.accessToken(), result.refreshToken(), result.expiresIn()));
-    }
+        return ResponseEntity.status(HttpStatus.CREATED).body(AuthResponse.of(result.accessToken(), result.refreshToken(), result.expiresIn()));}
 }
 
